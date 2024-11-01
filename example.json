@@ -1,0 +1,158 @@
+{
+  "keysets": [
+    {
+      "name": "my_root_ca",
+      "rsa": {
+        "id": 10,
+        "size": 4096,
+        "secret": "password root ca",
+        "output": [ "pkcs8", "pkcs1" ],
+        "file": {
+          "pkcs8": "",
+          "private_ssh": "",
+          "use": ""
+        }
+      }
+    },
+    {
+      "name": "my_entity_issuer",
+      "rsa": {
+        "id": 11,
+        "size": 4096,
+        "secret": "password issuer",
+        "output": [ "pkcs8", "pkcs1" ],
+        "file": {
+          "pkcs8": "",
+          "private_ssh": "",
+          "use": ""
+        }
+      }
+    },
+    {
+      "name": "my_server",
+      "rsa": {
+        "id": 12,
+        "size": 4096,
+        "secret": "password_server-id",
+        "output": [ "pkcs8", "pkcs1" ],
+        "file": {
+          "pkcs8": "",
+          "private_ssh": "",
+          "use": ""
+        }
+      }
+    },
+    {
+      "name": "my_personal_key",
+      "rsa": {
+        "id": 13,
+        "size": 4096,
+        "secret": "my-personal_password",
+        "output": [ "pkcs8", "pkcs1", "private_ssh", "public_ssh" ],
+        "file": {
+          "pkcs8": "",
+          "private_ssh": "",
+          "use": ""
+        }
+      },
+      "ed25519": {
+        "id": 130,
+        "secret": "yes I can have MULtiPLe PasSwOrDS",
+        "output": [ "pkcs8", "private_ssh", "public_ssh" ],
+        "file": {
+          "pkcs8": "",
+          "private_ssh": "",
+          "use": ""
+        }
+      }
+    },
+    {
+      "name": "other_key",
+      "rsa": {
+        "id": 14,
+        "size": 4096,
+        "secret": "password_server-id",
+        "output": [ "pkcs1" ],
+        "file": {
+          "pkcs8": "/home/myname/identities/other_key_pkcs8.pem",
+          "private_ssh": "/home/myname/identities/other_key_ssh.pem",
+          "use": "pkcs8"
+        }
+      }
+    }
+  ],
+  "certificates": [
+    {
+      "id": 1,
+      "name": "my_root_ca_certificate",
+      "days_valid": 1825,
+      "key": 10,
+      "root": 0,
+      "sign_other": true,
+      "max_subordinates": -1,
+      "subject": {
+        "c": "US",
+        "st": "NY",
+        "l": "New York",
+        "o": "My Company",
+        "ou": "My Company - Identities Department",
+        "cn": "My Company Root Certification Authority",
+        "emailAddress": "email@example.com"
+      }
+    },
+    {
+      "id": 2,
+      "name": "my_entity_issuer",
+      "days_valid": 912,
+      "key": 11,
+      "root": 1,
+      "sign_other": true,
+      "max_subordinates": 1,
+      "subject": {
+        "c": "US",
+        "st": "NY",
+        "l": "New York",
+        "o": "My Company",
+        "ou": "My Company - Identities Department",
+        "cn": "My Company Certificate Issuer",
+        "emailAddress": "email@example.com"
+      }
+    },
+    {
+      "id": 3,
+      "name": "my_server",
+      "days_valid": 365,
+      "key": 12,
+      "root": 2,
+      "sign_other": false,
+      "max_subordinates": 0,
+      "subject": {
+        "c": "US",
+        "st": "NY",
+        "l": "New York",
+        "o": "My Company",
+        "ou": "My Company - Applications Department",
+        "cn": "myserver.mycompany.example.com",
+        "emailAddress": "email@example.com"
+      }
+    },
+    {
+      "id": 4,
+      "name": "my_personal_certificate",
+      "days_valid": 365,
+      "key": 13,
+      "root": 2,
+      "sign_other": false,
+      "max_subordinates": 0,
+      "subject": {
+        "c": "US",
+        "st": "NY",
+        "l": "New York",
+        "o": "My Company",
+        "ou": "My Company - Personnel Department",
+        "cn": "My Company - John Doe",
+        "emailAddress": "johndoe@example.com"
+      }
+    }
+  ]
+}
