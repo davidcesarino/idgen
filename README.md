@@ -127,9 +127,20 @@ A positive, non-zero, unique integer identifier. As stated before, it
 must be unique not only between certificates but also between certificates
 and keys as well.
 
+`key`
+
+The id identifying the key to use to sign the certificate. It _**must**_
+correspond to a previously defined key.
+
 `name`
 
 Identifier string for the certificate.
+
+`file`
+
+When not empty, loads the certificate from this path instead of generating, 
+ignoring `days_valid`, `root`, `sign_other`, `max_subordinates` and 
+`subject` fields.
 
 `days_valid`
 
@@ -139,11 +150,6 @@ for the certificate to be valid, expiring at the last second of the day.
 > ## ⚠️
 >
 > All time references are UTC based.
-
-`key`
-
-The id identifying the key to use to sign the certificate. It _**must**_
-correspond to a previously defined key.
 
 `root`
 
@@ -169,10 +175,6 @@ certificates.
 The path length for this certificate, i.e., the maximum depth of the chain
 of children certificates under this one. Use it to control the maximum 
 depth of your certificate chains.
-
-> ## ⚠️
->
-> This option has no effect when `sign_other` is `false`.
 
 > ## 💡
 > - If you do not want to restrict the chain depth, set this value to `-1`.
