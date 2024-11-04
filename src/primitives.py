@@ -59,14 +59,18 @@ WARN_ED_PKCS_ID1_WRITE = \
      'To avoid compatibility issues, use only SSH.')
 WARN_NAME1_TYPE2_NO_OUTPUT = \
     'Skipping "{}" key for "{}": no outputs configured.'
+WARN_CERT1_WRITING_FILE = \
+    'Skipping writing certificate id "{}": already in file and loaded.'
 
 ERR_EMPTY_KEYSET = 'Key sets must have at least one defined key.'
 ERR_1_ISNT_VALID_FORMAT = '{} is not a valid format name.'
 ERR_INVALID_FORMAT1_FOR_KEY2 = 'Invalid file format "{}" for key id "{}".'
-ERR_ID1_PKCSFILE2_NOT_FOUND = 'PKCS#8 file for key id "{}" not found: "{}".'
-ERR_ID1_SSHFILE2_NOT_FOUND = 'SSH file for key id "{}" not found: "{}".'
+ERR_KEY_ID1_FILE2_NOT_FOUND = 'File for key id "{}" not found: {}'
+ERR_ID1_PKCSFILE2_NOT_FOUND = 'PKCS#8 file for key id "{}" not found: {}'
+ERR_ID1_SSHFILE2_NOT_FOUND = 'SSH file for key id "{}" not found: {}'
 ERR_ID1_IS_TYPE2_NO_PKCS1 = 'Key id "{}" is "{}": PKCS1 not supported.'
 ERR_TYPE1_2_RSA_OR_ED25519 = 'Key id "{}" must be RSA or ED25519. Got: "{}"'
+ERR_DIR2_FOR_OBJ1_NOT_FOUND = 'Folder not found for object id "{}": {}'
 ERR_CERT1_INVALID_DURATION2 = \
     ('Certificate named "{}" must be valid at least for today. '
      'Parameter "{}" must be >= 0.')
@@ -80,9 +84,11 @@ ERR_LEAFED_PARENT1_PARAM2 = \
      'non-zero integer to set the maximum depth of the chain, or a negative '
      'integer to allow for an unlimited depth in the descendants tree.')
 ERR_KEY1_FOR_CERT2 = \
-    'Cannot find signing key id "{}" for certificate with id "{}"'
+    'Cannot find signing key id "{}" for certificate id "{}"'
 ERR_ROOT1_FOR_CERT2 = \
-    'Cannot find parent certificate with id "{}" for certificate with id "{}"'
+    'Cannot find parent certificate id "{}" for certificate id "{}"'
+ERR_CERT_ID1_FILE2_NOT_FOUND = 'File for certificate id "{}" not found: {}'
+
 # ###################################################################
 # INTERNAL VALUES
 # ###################################################################
@@ -161,6 +167,10 @@ FIELD_C_ID = _STR_ID
 FIELD_C_NAME = _STR_NAME
 FIELD_C_VALID = _STR_DAYS_VALID
 FIELD_C_KEY = _STR_KEY
+FIELD_C_ROOT = _STR_ROOT
+FIELD_C_SIGN_OTHER = _STR_SIGN_OTHER
+FIELD_C_MAX_SUBS = _STR_MAX_SUBS
+FIELD_C_FILE = _STR_FILE
 FIELD_C_SUBJ = _STR_SUBJECT
 FIELD_C_S_COUNTRY = _STR_SUBJ_COUNTRY
 FIELD_C_S_PROVINCE = _STR_SUBJ_PROVINCE
@@ -169,6 +179,3 @@ FIELD_C_S_ORG = _STR_SUBJ_ORG
 FIELD_C_S_ORG_UNIT = _STR_SUBJ_ORG_UNIT
 FIELD_C_S_CN = _STR_SUBJ_COMMON_NAME
 FIELD_C_S_EMAIL = _STR_SUBJ_EMAIL
-FIELD_C_ROOT = _STR_ROOT
-FIELD_C_MAX_SUBS = _STR_MAX_SUBS
-FIELD_C_SIGN_OTHER = _STR_SIGN_OTHER

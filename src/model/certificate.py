@@ -27,10 +27,13 @@ from src.log import Log
 from src.model.key import Key
 from src.model.subject import Subject
 from src.primitives import ERR_CERT1_INVALID_DURATION2
+from src.primitives import ERR_CERT_ID1_FILE2_NOT_FOUND
+from src.primitives import ERR_DIR2_FOR_OBJ1_NOT_FOUND
 from src.primitives import ERR_KEY1_FOR_CERT2
 from src.primitives import ERR_LEAFED_PARENT1_PARAM2
 from src.primitives import ERR_OPEN_CHILD1_SUBS2_PARAM3
 from src.primitives import ERR_ROOT1_FOR_CERT2
+from src.primitives import FIELD_C_FILE
 from src.primitives import FIELD_C_ID
 from src.primitives import FIELD_C_KEY
 from src.primitives import FIELD_C_MAX_SUBS
@@ -51,6 +54,8 @@ from src.primitives import FILE_PREFFIX_CERTIFICATE
 from src.primitives import FILE_SEP_EXT
 from src.primitives import FILE_SEP_LARGE
 from src.primitives import FILE_SEP_SMALL
+from src.primitives import STR_EMPTY
+from src.primitives import WARN_CERT1_WRITING_FILE
 
 
 class Certificate:
@@ -67,34 +72,43 @@ class Certificate:
 
     def __init__(self, *,
             log: Log,
-            name: str,
-            timestamp: int,
-            days_valid: int,
-            subject: Subject,
             key: Key,
+            certificate_id: int,
+            name: str,
+            subject: Subject=None,
+            timestamp: int=None,
+            days_valid: int=None,
             sign_other: bool=True,
             max_subordinates: int=-1,
-            root_certificate: "Certificate",
+            x509_certificate: x509.Certificate=None,
+            root_certificate: "Certificate"=None,
             usage: x509.KeyUsage=STANDARD_USAGE):
         self.log=log
-        if days_valid < 0:
-            # This must be the function parameter name. Hence why hardcoded.
-            msg=ERR_CERT1_INVALID_DURATION2.format(name, "days_valid")
-            self.log.e(ValueError(msg))
-        self.name=name
-        self.timestamp=timestamp
-        self.subject=subject
         self.key=key
-        self.valid_from=datetime.fromtimestamp(timestamp, timezone.utc)
-        delta_end=timedelta(days=days_valid)
-        self.expiration=self.valid_from.replace(
-            # Valid until 23:59:59 UTC of the end day.
-            hour=23, minute=59, second=59, microsecond=0) + delta_end
-        self.sign_other=sign_other
-        self.max_subordinates=max_subordinates
-        self.root_certificate=root_certificate
-        self.usage=usage
-        self.x509_certificate=self._make_certificate()
+        self.certificate_id=certificate_id
+        self.name=name
+
+        if x509_certificate is None:
+            self.subject=subject
+            self.timestamp=timestamp
+            if days_valid < 0:
+                # This must be the function parameter name. Hence why hardcoded.
+                msg=ERR_CERT1_INVALID_DURATION2.format(name, "days_valid")
+                self.log.e(ValueError(msg))
+            self.valid_from=datetime.fromtimestamp(timestamp, timezone.utc)
+            delta_end=timedelta(days=days_valid)
+            self.expiration=self.valid_from.replace(
+                # Valid until 23:59:59 UTC of the end day.
+                hour=23, minute=59, second=59, microsecond=0) + delta_end
+            self.sign_other=sign_other
+            self.max_subordinates=max_subordinates
+            self.root_certificate=root_certificate
+            self.usage=usage
+            self.x509_certificate=self._make_certificate()
+            self.is_file_loaded=False
+        else:
+            self.x509_certificate=x509_certificate
+            self.is_file_loaded=True
 
     @staticmethod
     def _raise_leafed_parent(log: Log, name: str):
@@ -156,10 +170,27 @@ class Certificate:
             timestamp: int,
             keys_cache: dict,
             certificates_cache: dict):
+        certificate_id=certificate_data[FIELD_C_ID]
+        key_id=certificate_data[FIELD_C_KEY]
+
+        if not keys_cache.__contains__(key_id):
+            msg=(ERR_KEY1_FOR_CERT2.format(key_id, certificate_id))
+            log.e(ValueError(msg))
+
+        key=keys_cache[key_id]
         name=certificate_data[FIELD_C_NAME]
+        file_path=certificate_data[FIELD_C_FILE]
+
+        if file_path != STR_EMPTY:
+            return Certificate.from_file(
+                log=log,
+                file_path=file_path,
+                key=key,
+                name=name,
+                certificate_id=certificate_id)
+
         days_valid=certificate_data[FIELD_C_VALID]
         subject=Certificate._subject(certificate_data[FIELD_C_SUBJ])
-        key_id=certificate_data[FIELD_C_KEY]
         root_id=certificate_data[FIELD_C_ROOT]
         sign_other=certificate_data[FIELD_C_SIGN_OTHER]
         max_subordinates=certificate_data[FIELD_C_MAX_SUBS]
@@ -170,26 +201,43 @@ class Certificate:
             Certificate._raise_leafed_parent(log, name)
         if not sign_other and max_subordinates != 0:
             Certificate._raise_open_leaf(log, name, max_subordinates)
-        if not keys_cache.__contains__(key_id):
-            msg=(ERR_KEY1_FOR_CERT2
-                 .format(key_id, certificate_data[FIELD_C_ID]))
-            log.e(ValueError(msg))
         if is_child and not certificates_cache.__contains__(root_id):
-            msg=(ERR_ROOT1_FOR_CERT2
-                 .format(root_id, certificate_data[FIELD_C_ID]))
+            msg=(ERR_ROOT1_FOR_CERT2.format(root_id,certificate_id))
             log.e(ValueError(msg))
 
         root_cert=certificates_cache[root_id] if root_id > 0 else None
         return Certificate(
             log=log,
+            key=key,
+            certificate_id=certificate_id,
             name=name,
+            subject=subject,
             timestamp=timestamp,
             days_valid=days_valid,
-            subject=subject,
-            key=keys_cache[key_id],
             sign_other=sign_other,
             max_subordinates=max_subordinates,
             root_certificate=root_cert)
+
+    @staticmethod
+    def from_file(*,
+        log: Log,
+        file_path: str,
+        key: Key,
+        name: str,
+        certificate_id: int):
+        if not os.path.isfile(file_path):
+            msg=ERR_CERT_ID1_FILE2_NOT_FOUND.format(certificate_id, file_path)
+            log.e(ValueError(msg))
+
+        with open(file_path, "rb") as certificate_file:
+            content=certificate_file.read()
+            certificate=x509.load_pem_x509_certificate(content)
+            return Certificate(
+                log=log,
+                key=key,
+                certificate_id=certificate_id,
+                name=name,
+                x509_certificate=certificate)
 
     @staticmethod
     def _subject(subject_data: dict) -> Subject:
@@ -205,12 +253,17 @@ class Certificate:
 
     def write(self, outdir: str):
         """Writes this certificate to a file in the `outdir` folder."""
+        if self.is_file_loaded:
+            self.log.w(WARN_CERT1_WRITING_FILE.format(self.certificate_id))
+            return
+
         if not os.path.isdir(outdir):
-            raise NotADirectoryError(outdir)
-        else:
-            path=os.path.join(outdir, self._file_name())
-            with open(path, "wb") as file:
-                file.write(self.x509_certificate.public_bytes(Encoding.PEM))
+            msg=ERR_DIR2_FOR_OBJ1_NOT_FOUND.format(self.certificate_id, outdir)
+            self.log.e(NotADirectoryError(msg))
+
+        path=os.path.join(outdir, self._file_name())
+        with open(path, "wb") as file:
+            file.write(self.x509_certificate.public_bytes(Encoding.PEM))
         return
 
     def _file_name(self):

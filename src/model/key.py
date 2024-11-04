@@ -37,10 +37,12 @@ from cryptography.hazmat.primitives.serialization import PublicFormat
 from src.log import Log
 from src.model.key_outputs import KeyOutputs
 from src.primitives import ERR_1_ISNT_VALID_FORMAT
+from src.primitives import ERR_DIR2_FOR_OBJ1_NOT_FOUND
 from src.primitives import ERR_ID1_IS_TYPE2_NO_PKCS1
 from src.primitives import ERR_ID1_PKCSFILE2_NOT_FOUND
 from src.primitives import ERR_ID1_SSHFILE2_NOT_FOUND
 from src.primitives import ERR_INVALID_FORMAT1_FOR_KEY2
+from src.primitives import ERR_KEY_ID1_FILE2_NOT_FOUND
 from src.primitives import ERR_TYPE1_2_RSA_OR_ED25519
 from src.primitives import FIELD_K_FILE
 from src.primitives import FIELD_K_ID
@@ -172,6 +174,10 @@ class Key(ABC):
             outputs: KeyOutputs,
             file_path: str,
             file_encoding: str=FILE_ENCODING_DEFAULT):
+        if not os.path.isfile(file_path):
+            msg=ERR_KEY_ID1_FILE2_NOT_FOUND.format(key_id, file_path)
+            log.e(ValueError(msg))
+
         with open(file_path, "rb") as key_file:
             if private_format == PrivateFormat.PKCS8:
                 if key_type == KEY_TYPE_ED25519_NAME:
@@ -233,26 +239,27 @@ class Key(ABC):
             file_encoding: str=FILE_ENCODING_DEFAULT,
             append_ssh_info: bool=True):
         if not os.path.isdir(outdir):
-            raise NotADirectoryError(outdir)
-        else:
-            if (key_format == PrivateFormat.PKCS8
-                    and self._friendly_name() == FILE_PREFFIX_ED25519):
-                msg=WARN_ED_PKCS_ID1_WRITE.format(self.key_id)
-                self.log.w(msg)
-            outfile=self._file_name(key_format, name, timestamp)
-            contents=self._key_bytes(key_format, file_encoding)
-            if append_ssh_info and key_format == PublicFormat.OpenSSH:
-                # Remove extension.
-                identity=outfile.split(FILE_SEP_EXT, 1)[0]
-                contents += ' {}\n'.format(identity).encode(file_encoding)
-            outpath=os.path.join(outdir, outfile)
-            with open(outpath, "wb") as file:
-                file.write(contents)
-                if key_format == PrivateFormat.PKCS8 \
-                        or key_format == PrivateFormat.OpenSSH:
-                    os.chmod(outpath, S_IRUSR | S_IWUSR)
-                else:
-                    os.chmod(outpath, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)
+            msg=ERR_DIR2_FOR_OBJ1_NOT_FOUND.format(self.key_id, outdir)
+            self.log.e(NotADirectoryError(msg))
+
+        if (key_format == PrivateFormat.PKCS8
+                and self._friendly_name() == FILE_PREFFIX_ED25519):
+            msg=WARN_ED_PKCS_ID1_WRITE.format(self.key_id)
+            self.log.w(msg)
+        outfile=self._file_name(key_format, name, timestamp)
+        contents=self._key_bytes(key_format, file_encoding)
+        if append_ssh_info and key_format == PublicFormat.OpenSSH:
+            # Remove extension.
+            identity=outfile.split(FILE_SEP_EXT, 1)[0]
+            contents += ' {}\n'.format(identity).encode(file_encoding)
+        outpath=os.path.join(outdir, outfile)
+        with open(outpath, "wb") as file:
+            file.write(contents)
+            if key_format == PrivateFormat.PKCS8 \
+                    or key_format == PrivateFormat.OpenSSH:
+                os.chmod(outpath, S_IRUSR | S_IWUSR)
+            else:
+                os.chmod(outpath, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)
 
     def _file_name(self,
             key_format: PrivateFormat | PublicFormat,
