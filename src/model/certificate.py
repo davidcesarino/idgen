@@ -132,7 +132,7 @@ class Certificate:
                 self.log, self.name, self.max_subordinates)
         # Other.
         issuer_name=self.subject.x509_name() if is_root \
-            else self.root_certificate.subject.x509_name()
+            else self.root_certificate.x509_certificate.subject
         private_key=self.key.private_key if is_root \
             else self.root_certificate.key.private_key
         depth=None if not self.sign_other or self.max_subordinates < 0 \
