@@ -18,7 +18,7 @@
 # ###################################################################
 APP_NAME = 'IdGen'
 APP_CALL = 'idgen'
-APP_VERSION = '0.1'
+APP_VERSION = '0.9'
 APP_YEAR = '2024'
 APP_AUTHOR = 'David Cesarino de Sousa <1624159+davidcesarino@users.noreply.github.com>'
 ERR_PATH_NODIR = 'no such directory: {}'
