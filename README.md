@@ -23,7 +23,7 @@ idgen [-h] [-l] [-a] [-v {error,warning,info,debug}]
 
 ### Positional parameters
 
-If no options are provided, then these parameters are mandatory.
+These parameters are mandatory, except when using `-h`, `-l` and `-a`.
 
 `config_file`: describes the keys and certificates in JSON format. See the 
 section _“Json file format”_ below.
